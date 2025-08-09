@@ -10,31 +10,31 @@
         <transition name="fade">
             <ul class="nav-menu-list" v-if="menuVisible">
                 <li>
-                    <div class="nav-menu-item-cont">
+                    <div @click="$emit('change-view', 'home')" class="nav-menu-item-cont">
                         <img src="/src/assets/pomodoro.png">
                         <p>Home</p>
                     </div>
                 </li>
                 <li>
-                    <div class="nav-menu-item-cont">
+                    <div @click="$emit('change-view', 'tasks')" class="nav-menu-item-cont">
                         <img src="/src/assets/tasks.png">
                         <p>Tasks</p>
                     </div>
                 </li>
                 <li>
-                    <div class="nav-menu-item-cont">
+                    <div @click="$emit('change-view', 'goals')" class="nav-menu-item-cont">
                         <img src="/src/assets/goals.png">
                         <p>Goals</p>
                     </div>
                 </li>
                 <li>
-                    <div class="nav-menu-item-cont">
+                    <div @click="$emit('change-view', 'statistics')" class="nav-menu-item-cont">
                         <img src="/src/assets/statistics.png">
                         <p>Statistics</p>
                     </div>
                 </li>
                 <li>
-                    <div @click="placeholderFunc()" class="nav-menu-item-cont">
+                    <div @click="$emit('change-view', 'settings')" class="nav-menu-item-cont">
                         <img src="/src/assets/settings.png">
                         <p>Settings</p>
                     </div>
@@ -73,11 +73,13 @@
         height: 75%;
         padding-top: 5%;
         margin-bottom: 25%; 
+        border: 0.5px dashed black;
     }
 
     .nav-menu-item-cont:hover{
         background-color: green;
         transition: 0.5s;
+        cursor: pointer;
     }
 
     .nav-menu-item-cont > img {
@@ -114,6 +116,7 @@
 </style>
 
 <script setup lang="ts">
+
     import {ref} from 'vue';
     const menuVisible = ref(true);
 
@@ -121,7 +124,4 @@
         menuVisible.value = !menuVisible.value;
     }
 
-    let placeholderFunc = function(){
-        alert('This feature is not implemented yet');
-    }
 </script>

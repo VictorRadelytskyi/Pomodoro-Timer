@@ -32,9 +32,19 @@
             opacity="0.7"
         />
     </svg>
-    <p class="time-left">{{minutes}}:{{seconds.toString().padStart(2, "0")}}</p>
-    <button @click="updateTimer">{{timerState}}</button>
-    <div class="input-group" style="display: none;">
+    <div class="time-left">
+        Time left: {{minutes}}:{{seconds.toString().padStart(2, "0")}}
+    </div> 
+    <Transition name="fade" v-if="!isPaused">
+        <button id="timerButton" class="control-button" @click="updateTimer">{{timerState}}</button>
+    </Transition>
+    <Transition v-else>
+        <button id="resumeButton" class="control-button" @click="resumeTimer">Resume Timer</button>
+    </Transition>
+    <Transition name="fade">
+        <button id="pauseButton" class="control-button" v-show="isRunning" @click="pauseTimer">Pause Timer</button>
+    </Transition>
+    <div class="input-group">
         <label for="timer-update">Update time left [seconds left]</label>
         <input 
         min="1" 
@@ -63,6 +73,7 @@
     const minutes = computed(()=>Math.floor(timeLeft.value/60));
     const seconds = computed(()=>timeLeft.value%60);
     const isRunning = ref(false);
+    const isPaused = ref(false);
     const timerState = ref("Start Session");
     const angleDeg = computed(()=>360*(pomodoroTime-timeLeft.value)/pomodoroTime)
     
@@ -98,6 +109,20 @@
         else{
             stopTimer();
         }
+    }
+
+    const pauseTimer = function(){
+        if(updateTimerInterval){
+            clearInterval(updateTimerInterval);
+            updateTimerInterval = undefined;
+        }
+        isPaused.value = true;
+        isRunning.value = false;
+    }
+
+    const resumeTimer = function(){
+        startTimer();
+        isPaused.value = false;
     }
 
     const generateLine = function(cx: number, cy: number, angle: number, length: number, strokeWidth: number, color: string = "#42b983") {
@@ -151,3 +176,43 @@
         }
     }
 </script>
+
+<style scoped>
+    .control-button{
+        margin-top: 5px;
+        margin-bottom: 5px;
+        border: 1px solid;
+        border-radius: 5px;
+        padding: 10px 20px 10px 20px;
+        background-color: #AFDEB8;
+    }
+
+    .control-button:hover{
+        background-color: rgb(87, 254, 87);
+        transition: 0.3s;
+        cursor: pointer;
+        box-shadow: 0 0 2px green;
+    }
+
+    .time-left{
+        margin: 10px 0 10px 0;
+        padding: 15px 30px 15px 30px;
+        background-color: #FFC5BC;
+        border-radius: 3px;
+        border: 1px solid;
+        box-shadow: 0 0 2px green;
+    }
+
+    .fade-enter-active, .fade-leave-active{
+        transition: opacity 0.5s;
+    }
+    
+    .fade-leave-to, .fade-enter-from{
+        opacity: 0;
+    }
+
+    .fade-enter-to, .fade-leave-from{
+        opacity: 1;
+    }
+
+</style>

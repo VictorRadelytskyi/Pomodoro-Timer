@@ -15,7 +15,10 @@
     .pomodoro-session-cont{
         background-color: #FFEDFF;
         width: 451px;
-        height: 428px;
+        height: auto;
+        padding: 10px 0 10px 0;
+        border: 1px solid;
+        box-shadow: 1px 1px 1px green;
     }
     .main-section{
         margin-left: 72px;
@@ -35,5 +38,9 @@
     .strip-boundaries{
         padding: 0;
         margin: 0;
+    }
+
+    .pomodoro-session-cont > h4{
+        margin: 10px 0 10px 0;
     }
 </style>
