@@ -1,5 +1,6 @@
 <template>
-    <svg :width="svgWidth" :height="svgHeight">
+    <div class="timer-svg">
+        <svg :width="svgWidth" :height="svgHeight">
         <!-- clock-->
         <circle 
             :cx="cx"
@@ -29,20 +30,25 @@
         <path
             :d="drawPie(cx, cy, r-1, angleDeg)"
             fill="lightgreen"
-            opacity="0.7"
+            opacity="0.85"
         />
     </svg>
+    </div>
     <div class="time-left">
-        Time left: {{minutes}}:{{seconds.toString().padStart(2, "0")}}
+        <span class="time-display">Time left: {{minutes}}:{{seconds.toString().padStart(2, "0")}}</span>
     </div> 
     <Transition name="fade" v-if="!isPaused">
         <button id="timerButton" class="control-button" @click="updateTimer">{{timerState}}</button>
     </Transition>
     <Transition v-else>
-        <button id="resumeButton" class="control-button" @click="resumeTimer">Resume Timer</button>
+        <button id="resumeButton" class="control-button" @click="resumeTimer">
+            Resume Timer
+        </button>
     </Transition>
     <Transition name="fade">
-        <button id="pauseButton" class="control-button" v-show="isRunning" @click="pauseTimer">Pause Timer</button>
+        <button id="pauseButton" class="control-button" v-show="isRunning" @click="pauseTimer">
+            Pause Timer
+        </button>
     </Transition>
     <div class="input-group">
         <label for="timer-update">Update time left [seconds left]</label>
@@ -71,23 +77,40 @@
     const pomodoroTime = 25*60;
     const timeLeft = ref(pomodoroTime);
     const minutes = computed(()=>Math.floor(timeLeft.value/60));
-    const seconds = computed(()=>timeLeft.value%60);
+    const seconds = computed(()=>Math.round(timeLeft.value%60));
     const isRunning = ref(false);
     const isPaused = ref(false);
     const timerState = ref("Start Session");
-    const angleDeg = computed(()=>360*(pomodoroTime-timeLeft.value)/pomodoroTime)
+    const angleDeg = computed(()=>360*(pomodoroTime-timeLeft.value)/pomodoroTime);
+    import type {Task} from '../../composables/useTasks';
+    import {useTasks} from '../../composables/useTasks';
+    const {updateTimeWorkedOn, playSoundOnPomodoroCompletion} = useTasks();
+    const taskWorkingOn = ref<Task | null>(null);
     
-
     //an ID of the interval which updates timeLeft each second
     let updateTimerInterval: number | undefined = undefined;
+    let lastUpdateTime = Date.now();
+
+    //think of how to make the time update more synchronized
     const startTimer = function(){
+        lastUpdateTime = Date.now(); //reset timer reference
         updateTimerInterval = setInterval(function(){
             if(timeLeft.value > 0){
-                timeLeft.value--;
+                const now = Date.now();
+                const timeSinceLastUpdate = (now-lastUpdateTime)/1000;
+                if (timeSinceLastUpdate >= 1){
+                    timeLeft.value-=timeSinceLastUpdate;
+                    if(taskWorkingOn.value){
+                        updateTimeWorkedOn(taskWorkingOn.value, timeSinceLastUpdate);
+                    }
+                    lastUpdateTime = now;
+                }
             } else{
+                console.log('Pomodoro completed');
+                playSoundOnPomodoroCompletion();
                 stopTimer();
             }
-        }, 1000);
+        }, 250);
         isRunning.value = true;
         timerState.value = "Stop Session";
     }
@@ -175,6 +198,16 @@
             timeLeft.value = inputSeconds.value;
         }
     }
+
+    const bindTask = function(task: Task){
+        taskWorkingOn.value = task;
+        console.log(`task with id: ${task.id} has been bounded`);
+    }
+
+    defineExpose({
+        bindTask
+    });
+
 </script>
 
 <style scoped>
@@ -194,6 +227,12 @@
         box-shadow: 0 0 2px green;
     }
 
+    .timer-svg{
+        border: 0px inset pink;
+        box-shadow: 0px 0px 4px rgba(0,0,0,0.1);
+        padding: 5px;
+    }
+
     .time-left{
         margin: 10px 0 10px 0;
         padding: 15px 30px 15px 30px;
@@ -201,6 +240,11 @@
         border-radius: 3px;
         border: 1px solid;
         box-shadow: 0 0 2px green;
+    }
+
+    .time-display{
+        font-size: 22px;
+        font-weight: bold;
     }
 
     .fade-enter-active, .fade-leave-active{

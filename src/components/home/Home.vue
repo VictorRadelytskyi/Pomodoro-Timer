@@ -1,14 +1,33 @@
 <template>
     <div class="main-section"> 
+        <BindToTask @task-selected="bindTimerToTask"/>
         <div class="pomodoro-session-cont horizontal-centralize down-flex">
             <h4 class="strip-boundaries">Pomodoro Session</h4>
-            <Timer/>
+            <Timer
+                ref="timerRef"
+            />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import Timer from './Timer.vue'
+    import Timer from './Timer.vue';
+    import BindToTask from './BindToTask.vue';
+    import type {Task} from '../../composables/useTasks';
+    import {ref, nextTick} from 'vue';
+    const timerRef = ref<InstanceType<typeof Timer>>();
+
+    const bindTimerToTask = async function(task: Task){
+        //wait before the Timer component is mounted 
+        await nextTick();
+
+        if (timerRef.value && timerRef.value.bindTask){
+            timerRef.value.bindTask(task);
+        } else{
+            console.warn('Timer component not ready yet');
+        }
+    }
+
 </script>
 
 <style>
