@@ -16,7 +16,7 @@
 </script>
 
 <template>
-    <Menu @change-view="switchView"/>
+    <Menu :current-view="currentView" @change-view="switchView"/>
     <Header/>
         <Home v-if="currentView === 'home'" class="main-section"/>
         <Goals v-if="currentView === 'goals'"/>

@@ -8,6 +8,7 @@ export type Task = {
     isCompleted: boolean;
     timeWorkedOn: number;
     showTick?: boolean;
+    deadline?: Date;
 };
 const tasks = ref<Task[]>([]);
 export function useTasks(){
@@ -15,6 +16,7 @@ export function useTasks(){
     const uncompletedTasks = computed(()=>tasks.value.filter(task=>!task.isCompleted));
     const showPopup = ref<boolean>(false);
     const showPopupId = ref <string | null>(null);
+    const showCalendarId = ref<string | null>(null);
 
     const addTask = function(name: string){
         const trimmed = name.trim();
@@ -111,8 +113,68 @@ export function useTasks(){
     }
 
     const showCalendarPopup = function(taskId: string){
-
+        showCalendarId.value = showCalendarId.value === taskId ? null : taskId;
     }
+
+    const closeCalendar = function(){
+        showCalendarId.value = null;
+    }
+
+    const isCalendarOpen = function(taskId: string){
+        return showCalendarId.value === taskId;
+    }
+
+    const updateDeadline = function(taskId: string, dateObj: Date){
+        const task = tasks.value.find(task => task.id === taskId);
+        if (task) {
+            task.deadline = dateObj;
+        } else {
+            throw Error(`Can't find the task of id: ${taskId}`);
+        }
+    }
+
+    const removeDeadline = function(taskId: string) {
+        const task = tasks.value.find(t => t.id === taskId);
+        if (task) {
+            task.deadline = undefined;
+            console.log(`Removed deadline for task ${taskId}`);
+        }
+    }
+
+    const handleDeadlineUnselected = (taskId: string) => {
+        removeDeadline(taskId);
+        closeCalendar(); 
+    }
+
+    const formatDate = (date: Date | string): string => {
+        if (!date) return '';
+        
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        
+        if (isNaN(dateObj.getTime())) return 'Invalid Date';
+        
+        return dateObj.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric', 
+            year: 'numeric'
+        });
+    }
+
+    const formatWorkTime = (seconds: number | undefined): string => {
+        if (!seconds || seconds < 1) return '';
+        
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${secs}s`;
+        } else {
+            return `${secs}s`;
+        }
+    };
 
     onMounted(()=>{
         const saved = localStorage.getItem('tasks');
@@ -143,6 +205,13 @@ export function useTasks(){
         markAsUncompleted, 
         updateTimeWorkedOn,
         playSoundOnPomodoroCompletion,
-        showCalendarPopup
+        showCalendarPopup,
+        closeCalendar,
+        isCalendarOpen,
+        updateDeadline,
+        formatDate,
+        removeDeadline,
+        handleDeadlineUnselected,
+        formatWorkTime
     }
 }
