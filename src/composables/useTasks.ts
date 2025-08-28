@@ -1,6 +1,12 @@
 import {ref, watch, onMounted, computed} from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import settings from './settings';
+import {loadSettings} from './settings';
+
+const {
+    soundEffectOnPomodoroCompletion,
+    soundEffectOnTaskCompletion
+} = loadSettings();
+
 
 export type Task = {
     id: string;
@@ -89,14 +95,14 @@ export function useTasks(){
     };
 
     const playSoundOnPomodoroCompletion = function(volume: number = 0.5){
-        if (settings.soundEffectOnPomodoroCompletion){
-            playSound('/public/sounds/pomodoro_completed.mp3', volume);
+        if (soundEffectOnPomodoroCompletion){
+            playSound('/sounds/pomodoro_completed.mp3', volume);
         }
     }
 
     const playSoundOnTaskCompletion = function(volume: number = 0.5){
-        if (settings.soundEffectOnPomodoroCompletion){
-            playSound('/public/sounds/good.mp3', volume);
+        if (soundEffectOnTaskCompletion){
+            playSound('/sounds/good.mp3', volume);
         }
     }
 

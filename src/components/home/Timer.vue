@@ -1,159 +1,124 @@
 <template>
-    <div class="timer-svg">
-        <svg :width="svgWidth" :height="svgHeight">
-        <!-- clock-->
-        <circle 
-            :cx="cx"
-            :cy="cy"
-            :r="r"
-            :fill="fill"
-            :stroke-width="circleStrokeWidth"
-            :stroke="circleColor"
-        />
-        <!-- hour marks -->
-        <g>
-            <line v-for="(mark, idx) in marks"
-                :key="idx"
-                :x1="mark.x1"
-                :x2="mark.x2"
-                :y1="mark.y1"
-                :y2="mark.y2"
-                :stroke="mark.color"
-                :stroke-width="mark.strokeWidth"
-            />
-        </g>
+    <div class="timer-container">
+        <div class="timer-card">
+            <!-- Timer Display -->
+            <div class="timer-display">
+                <div class="timer-svg">
+                    <svg :width="svgWidth" :height="svgHeight">
+                        <!-- Background circle -->
+                        <circle 
+                            :cx="cx" :cy="cy" :r="r"
+                            :fill="fill" :stroke-width="2"
+                            stroke="#e5e7eb"
+                        />
+                        
+                        <!-- Hour marks -->
+                        <g>
+                            <line v-for="(mark, idx) in marks" :key="idx"
+                                :x1="mark.x1" :x2="mark.x2"
+                                :y1="mark.y1" :y2="mark.y2"
+                                :stroke="mark.color" :stroke-width="mark.strokeWidth"
+                            />
+                        </g>
+                        
+                        <!-- Progress circle -->
+                        <circle 
+                            :cx="cx" :cy="cy" :r="r"
+                            fill="none" 
+                            stroke="#6b7280" 
+                            stroke-width="3"
+                            stroke-dasharray="898"
+                            :stroke-dashoffset="898 - (898 * (pomodoroTime - timeLeft) / pomodoroTime)"
+                            stroke-linecap="round"
+                            transform="rotate(-90 147.5 145.5)"
+                        />
+                        
+                        <!-- Center dot -->
+                        <circle :cx="cx" :cy="cy" :r="3" fill="#6b7280" />
+                    </svg>
+                </div>
+                
+                <!-- Time Display -->
+                <div class="time-display">
+                    <div class="time-text">
+                        {{minutes}}:{{seconds.toString().padStart(2, "0")}}
+                    </div>
+                    <div class="time-label">Time Remaining</div>
+                </div>
+            </div>
 
-        <!-- center dot -->
-         <circle :cx="cx" :cy="cy" :r="4" :fill="circleColor" stroke="cicleColor"/>
-
-        <!--filling area-->
-        <path
-            :d="drawPie(cx, cy, r-1, angleDeg)"
-            fill="lightgreen"
-            opacity="0.85"
-        />
-    </svg>
-    </div>
-    <div class="time-left">
-        <span class="time-display">Time left: {{minutes}}:{{seconds.toString().padStart(2, "0")}}</span>
-    </div> 
-    <Transition name="fade" v-if="!isPaused">
-        <button id="timerButton" class="control-button" @click="updateTimer">{{timerState}}</button>
-    </Transition>
-    <Transition v-else>
-        <button id="resumeButton" class="control-button" @click="resumeTimer">
-            Resume Timer
-        </button>
-    </Transition>
-    <Transition name="fade">
-        <button id="pauseButton" class="control-button" v-show="isRunning" @click="pauseTimer">
-            Pause Timer
-        </button>
-    </Transition>
-    <div class="input-group">
-        <label for="timer-update">Update time left [seconds left]</label>
-        <input 
-        min="1" 
-        :max= "pomodoroTime" 
-        type="number" 
-        id="timer-update" 
-        @change="setTimeLeft"
-        v-model.number="inputSeconds"
-        />
+            <!-- Timer Controls -->
+            <div class="timer-controls">
+                <button 
+                    v-if="timerState === TimerState.STOPPED" 
+                    class="control-btn start"
+                    @click="startTimer"
+                >
+                    Start Session
+                </button>
+                
+                <button 
+                    v-if="timerState === TimerState.RUNNING" 
+                    class="control-btn pause"
+                    @click="pauseTimer"
+                >
+                    Pause
+                </button>
+                
+                <button 
+                    v-if="timerState === TimerState.PAUSED" 
+                    class="control-btn resume"
+                    @click="resumeTimer"
+                >
+                    Resume
+                </button>
+                
+                <button 
+                    v-if="timerState !== TimerState.STOPPED" 
+                    class="control-btn reset"
+                    @click="stopTimer"
+                >
+                    Reset
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from 'vue'
+    import {useGlobalTimer} from '../../composables/useGlobalTimer';
+    import {TimerState} from '../../composables/useGlobalTimer';
+    import {loadSettings} from '../../composables/settings';
+
+    const {pomodoroTime} = loadSettings()
+
+    const {
+        // State
+        timeLeft,
+        minutes,
+        seconds,
+        timerState,
+        
+        startTimer,
+        stopTimer,
+        pauseTimer,
+        resumeTimer,
+        bindTask,
+    } = useGlobalTimer();
+
     const svgWidth = 295;
     const svgHeight = 291;
     const cx = 147.5;
     const cy = 145.5;
     const r = 143; 
     const fill: string = "none";
-    const circleStrokeWidth = 5;
-    const circleColor: string = "#42b983";
 
-    const pomodoroTime = 25*60;
-    const timeLeft = ref(pomodoroTime);
-    const minutes = computed(()=>Math.floor(timeLeft.value/60));
-    const seconds = computed(()=>Math.round(timeLeft.value%60));
-    const isRunning = ref(false);
-    const isPaused = ref(false);
-    const timerState = ref("Start Session");
-    const angleDeg = computed(()=>360*(pomodoroTime-timeLeft.value)/pomodoroTime);
-    import type {Task} from '../../composables/useTasks';
-    import {useTasks} from '../../composables/useTasks';
-    const {updateTimeWorkedOn, playSoundOnPomodoroCompletion} = useTasks();
-    const taskWorkingOn = ref<Task | null>(null);
-    
-    //an ID of the interval which updates timeLeft each second
-    let updateTimerInterval: number | undefined = undefined;
-    let lastUpdateTime = Date.now();
-
-    //think of how to make the time update more synchronized
-    const startTimer = function(){
-        lastUpdateTime = Date.now(); //reset timer reference
-        updateTimerInterval = setInterval(function(){
-            if(timeLeft.value > 0){
-                const now = Date.now();
-                const timeSinceLastUpdate = (now-lastUpdateTime)/1000;
-                if (timeSinceLastUpdate >= 1){
-                    timeLeft.value-=timeSinceLastUpdate;
-                    if(taskWorkingOn.value){
-                        updateTimeWorkedOn(taskWorkingOn.value, timeSinceLastUpdate);
-                    }
-                    lastUpdateTime = now;
-                }
-            } else{
-                console.log('Pomodoro completed');
-                playSoundOnPomodoroCompletion();
-                stopTimer();
-            }
-        }, 250);
-        isRunning.value = true;
-        timerState.value = "Stop Session";
-    }
-
-    const stopTimer = function(){
-        if(updateTimerInterval){
-            clearInterval(updateTimerInterval);
-            updateTimerInterval = undefined;
-        }
-        isRunning.value = false;
-        timeLeft.value = 25*60;
-        timerState.value = "Start Session";
-    }
-
-    const updateTimer = function(){
-        if(!isRunning.value){
-            startTimer();
-        }
-        else{
-            stopTimer();
-        }
-    }
-
-    const pauseTimer = function(){
-        if(updateTimerInterval){
-            clearInterval(updateTimerInterval);
-            updateTimerInterval = undefined;
-        }
-        isPaused.value = true;
-        isRunning.value = false;
-    }
-
-    const resumeTimer = function(){
-        startTimer();
-        isPaused.value = false;
-    }
-
-    const generateLine = function(cx: number, cy: number, angle: number, length: number, strokeWidth: number, color: string = "#42b983") {
+    // Update the colors to match the professional theme
+    const generateLine = function(cx: number, cy: number, angle: number, length: number, strokeWidth: number, color: string = "#d1d5db") {
         const x1 = cx + r*Math.cos(angle);
         const y1 = cy + r*Math.sin(angle);
         const x2 = cx + (r-length)*Math.cos(angle);
         const y2 = cy + (r-length)*Math.sin(angle);
-        //console.log({x1, y1, x2, y2, strokeWidth, color});
         return {x1, y1, x2, y2, strokeWidth, color};
     }
 
@@ -166,10 +131,12 @@
         }
         const angle = Math.PI*(hour/6);
         if(hour%3 ==0){
-            return generateLine(cx, cy, angle, 40, 6);
+            // Quarter hour marks - thicker and darker
+            return generateLine(cx, cy, angle, 25, 3, "#9ca3af");
         }
         else{
-            return generateLine(cx, cy, angle, 30, 4);
+            // Regular hour marks - thinner and lighter
+            return generateLine(cx, cy, angle, 15, 2, "#d1d5db");
         }
     }
 
@@ -177,86 +144,187 @@
         return markHour(hour);
     })
 
-    const polarToCartesian = function(cx: number, cy: number, r: number, angleDeg: number): [number, number]{
-        const angleRad = (angleDeg-90)*Math.PI/180;
-        return [cx+r*Math.cos(angleRad), cy+r*Math.sin(angleRad)];
-    }
-
-    const drawPie = function(cx: number, cy: number, r: number, angle: number): string{
-        const [x1, y1] = polarToCartesian(cx, cy, r, 0);
-        const [x2, y2]  = polarToCartesian(cx, cy, r, angle);
-        const largeArcFlag = angle >= 180 ? 1 : 0;
-        const returnString = [`M ${cx} ${cy}`, `L ${x1} ${y1}`, `A ${r} ${r} 0 ${largeArcFlag} 1 ${x2} ${y2}`, 'Z'].join(" ");
-        //console.log(returnString);
-        return returnString;
-    }
-
-    const inputSeconds = ref(timeLeft.value);
-
-    const setTimeLeft = function(){
-        if(isRunning.value){
-            timeLeft.value = inputSeconds.value;
-        }
-    }
-
-    const bindTask = function(task: Task){
-        taskWorkingOn.value = task;
-        console.log(`task with id: ${task.id} has been bounded`);
-    }
-
     defineExpose({
         bindTask
     });
-
 </script>
 
 <style scoped>
-    .control-button{
-        margin-top: 5px;
-        margin-bottom: 5px;
-        border: 1px solid;
-        border-radius: 5px;
-        padding: 10px 20px 10px 20px;
-        background-color: #AFDEB8;
+    .timer-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 2rem;
+        background-color: #fafafa;
     }
 
-    .control-button:hover{
-        background-color: rgb(87, 254, 87);
-        transition: 0.3s;
+    .timer-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        padding: 3rem 2rem;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+    }
+
+    .timer-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .timer-svg {
+        margin-bottom: 1.5rem;
+    }
+
+    .time-text {
+        font-size: 3.5rem;
+        font-weight: 300;
+        color: #111827;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+    }
+
+    .time-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-family: system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.1em;
+        font-weight: 500;
+    }
+
+    .timer-controls {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .control-btn {
+        padding: 0.75rem 1.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
         cursor: pointer;
-        box-shadow: 0 0 2px green;
+        transition: all 0.2s ease;
+        background-color: #ffffff;
+        color: #374151;
+        min-width: 100px;
     }
 
-    .timer-svg{
-        border: 0px inset pink;
-        box-shadow: 0px 0px 4px rgba(0,0,0,0.1);
-        padding: 5px;
+    .control-btn:hover {
+        background-color: #f9fafb;
+        border-color: #9ca3af;
     }
 
-    .time-left{
-        margin: 10px 0 10px 0;
-        padding: 15px 30px 15px 30px;
-        background-color: #FFC5BC;
-        border-radius: 3px;
-        border: 1px solid;
-        box-shadow: 0 0 2px green;
+    .control-btn:active {
+        background-color: #f3f4f6;
+        transform: translateY(1px);
     }
 
-    .time-display{
-        font-size: 22px;
-        font-weight: bold;
+    .control-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
     }
 
-    .fade-enter-active, .fade-leave-active{
-        transition: opacity 0.5s;
-    }
-    
-    .fade-leave-to, .fade-enter-from{
-        opacity: 0;
+    .control-btn.start {
+        background-color: #111827;
+        color: #ffffff;
+        border-color: #111827;
     }
 
-    .fade-enter-to, .fade-leave-from{
-        opacity: 1;
+    .control-btn.start:hover {
+        background-color: #1f2937;
     }
 
+    .control-btn.pause {
+        background-color: #6b7280;
+        color: #ffffff;
+        border-color: #6b7280;
+    }
+
+    .control-btn.pause:hover {
+        background-color: #4b5563;
+    }
+
+    .control-btn.resume {
+        background-color: #111827;
+        color: #ffffff;
+        border-color: #111827;
+    }
+
+    .control-btn.resume:hover {
+        background-color: #1f2937;
+    }
+
+    .control-btn.reset {
+        color: #dc2626;
+        border-color: #fecaca;
+        background-color: #fef2f2;
+    }
+
+    .control-btn.reset:hover {
+        background-color: #fee2e2;
+        border-color: #fca5a5;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .timer-container {
+            padding: 1rem;
+            min-height: 60vh;
+        }
+        
+        .timer-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .time-text {
+            font-size: 2.5rem;
+        }
+        
+        .control-btn {
+            min-width: 90px;
+            padding: 0.625rem 1.25rem;
+            font-size: 0.8125rem;
+        }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        .timer-container {
+            background-color: #111827;
+        }
+
+        .timer-card {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+
+        .time-text {
+            color: #f9fafb;
+        }
+
+        .time-label {
+            color: #9ca3af;
+        }
+
+        .control-btn {
+            background-color: #374151;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+
+        .control-btn:hover {
+            background-color: #4b5563;
+        }
+    }
 </style>
