@@ -3,16 +3,21 @@ import { v4 as uuidv4 } from 'uuid';
 import {loadSettings} from './settings';
 
 const {
-    soundEffectOnPomodoroCompletion,
-    soundEffectOnTaskCompletion
+    playTaskCompletionSound,
 } = loadSettings();
 
+export enum Priority{
+    HIGH = "high",
+    MEDIUM = "medium",
+    LOW = "low"
+}
 
 export type Task = {
     id: string;
     name: string;
     isCompleted: boolean;
     timeWorkedOn: number;
+    priority?: Priority;
     showTick?: boolean;
     deadline?: Date;
 };
@@ -56,7 +61,7 @@ export function useTasks(){
         } else{
             throw Error(`Can't find the task of id: ${id}`);
         }
-        playSoundOnTaskCompletion();
+        playTaskCompletionSound();
     }
 
     const markAsUncompleted = function(id: string){
@@ -93,30 +98,6 @@ export function useTasks(){
     const updateTimeWorkedOn = function(task: Task, deltaSeconds: number){
         task.timeWorkedOn += deltaSeconds;
     };
-
-    const playSoundOnPomodoroCompletion = function(volume: number = 0.5){
-        if (soundEffectOnPomodoroCompletion){
-            playSound('/sounds/pomodoro_completed.mp3', volume);
-        }
-    }
-
-    const playSoundOnTaskCompletion = function(volume: number = 0.5){
-        if (soundEffectOnTaskCompletion){
-            playSound('/sounds/good.mp3', volume);
-        }
-    }
-
-    const playSound = function(path: string, volume: number = 0.5){
-        try{
-            const audio = new Audio(path);
-            audio.volume = volume;
-            audio.play().catch(err=>{
-                console.warn('Could not play pomodoro completion sound: ', err);
-            });
-        } catch(error){
-            console.warn('Audio not supported: ', error);
-        }
-    }
 
     const showCalendarPopup = function(taskId: string){
         showCalendarId.value = showCalendarId.value === taskId ? null : taskId;
@@ -210,7 +191,6 @@ export function useTasks(){
         markAsCompleted, 
         markAsUncompleted, 
         updateTimeWorkedOn,
-        playSoundOnPomodoroCompletion,
         showCalendarPopup,
         closeCalendar,
         isCalendarOpen,

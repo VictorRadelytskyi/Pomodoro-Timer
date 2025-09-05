@@ -3,8 +3,10 @@ import {useIntervalFn} from '@vueuse/core';
 import type {Task} from './useTasks';
 import {useTasks} from './useTasks';
 import {loadSettings} from './settings';
-
-const {pomodoroTime} = loadSettings();
+const {
+    pomodoroTime,
+    playPomodoroCompletionSound,
+} = loadSettings();
 
 export enum TimerState {
     RUNNING,
@@ -12,16 +14,16 @@ export enum TimerState {
     STOPPED 
 }
 
-const timeLeft = ref(pomodoroTime);
+const timeLeft = ref(pomodoroTime.value);
 const taskWorkingOn = ref<Task | null>(null);
 const timerState = ref<TimerState>(TimerState.STOPPED);
 
 export const useGlobalTimer = function(){
-    const angleDeg = computed(()=>360*(pomodoroTime-timeLeft.value)/pomodoroTime);
+    const angleDeg = computed(()=>360*(pomodoroTime.value-timeLeft.value)/pomodoroTime.value);
     const minutes = computed(() => Math.floor(timeLeft.value / 60));
     const seconds = computed(() => Math.round(timeLeft.value % 60));
 
-    const {updateTimeWorkedOn, playSoundOnPomodoroCompletion} = useTasks();
+    const {updateTimeWorkedOn} = useTasks();
     
     //an ID of the interval which updates timeLeft each second
     let updateTimerInterval: number | undefined = undefined;
@@ -29,13 +31,13 @@ export const useGlobalTimer = function(){
     const {pause, resume} = useIntervalFn(function(){
         if (timeLeft.value > 0){
             timeLeft.value -= 1;
-
+            
             if(taskWorkingOn.value){
                 updateTimeWorkedOn(taskWorkingOn.value, 1);
             } 
         } else{
             console.log("Pomodoro completed");
-            playSoundOnPomodoroCompletion();
+            playPomodoroCompletionSound();
             stopTimer();
          }
     }, 1000, {immediate: false})
@@ -47,7 +49,7 @@ export const useGlobalTimer = function(){
 
     const stopTimer = function(){
         pause();
-        timeLeft.value = pomodoroTime;
+        timeLeft.value = pomodoroTime.value;
         timerState.value = TimerState.STOPPED;
     }
 

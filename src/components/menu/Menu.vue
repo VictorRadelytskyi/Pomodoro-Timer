@@ -43,30 +43,30 @@ const menuItems = ref([
         view: 'home',
         label: 'Home',
         icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/>
+                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/>
                </svg>`
     },
     {
         view: 'tasks',
         label: 'Tasks',
         icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M10,17L5,12L6.41,10.59L10,14.17L17.59,6.58L19,8V17"/>
+                <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M10,17L5,12L6.41,10.59L10,14.17L17.59,6.58L19,8L10,17Z"/>
                </svg>`
     },
-    {
-        view: 'goals',
-        label: 'Goals',
-        icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
-               </svg>`
-    },
-    {
-        view: 'statistics',
-        label: 'Stats',
-        icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
-               </svg>`
-    },
+    // {
+    //     view: 'goals',
+    //     label: 'Goals',
+    //     icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    //             <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21A7,7 0 0,1 14,26H10A7,7 0 0,1 3,19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M12,4.5A0.5,0.5 0 0,0 11.5,4A0.5,0.5 0 0,0 12,3.5A0.5,0.5 0 0,0 12.5,4A0.5,0.5 0 0,0 12,4.5Z"/>
+    //            </svg>`
+    // },
+    // {
+    //     view: 'statistics',
+    //     label: 'Stats',
+    //     icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    //             <path d="M22,21H2V3H4V19H6V17H10V19H12V16H16V19H18V17H22V21Z"/>
+    //            </svg>`
+    // },
     {
         view: 'settings',
         label: 'Settings',
@@ -92,8 +92,9 @@ defineEmits<{
     left: 0;
     width: 72px;
     height: 100vh;
-    background: linear-gradient(135deg, #ea66a4 0%, #764ba2 100%);
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     overflow: hidden;
 }
@@ -105,17 +106,17 @@ defineEmits<{
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.1);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
 }
 
 .menu-toggle:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background-color: #f3f4f6;
 }
 
 .menu-icon {
-    color: white;
+    color: #6b7280;
     transition: transform 0.3s ease;
 }
 
@@ -124,13 +125,13 @@ defineEmits<{
 }
 
 .nav-menu-content {
-    padding-top: 8px;
+    padding: 0.5rem 0;
 }
 
 .nav-menu-items {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .nav-menu-item {
@@ -138,24 +139,23 @@ defineEmits<{
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 64px;
+    height: 60px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
     margin: 0 8px;
     border-radius: 12px;
-    color: rgba(255, 255, 255, 0.8);
+    color: #6b7280; 
 }
 
 .nav-menu-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    transform: translateX(3px);
+    background-color: #f9fafb;
+    color: #374151;
 }
 
 .nav-menu-item.active {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background-color: #111827;
+    color: #ffffff;
 }
 
 .nav-menu-item.active::before {
@@ -166,7 +166,7 @@ defineEmits<{
     transform: translateY(-50%);
     width: 3px;
     height: 24px;
-    background: #fff;
+    background-color: #111827;
     border-radius: 0 2px 2px 0;
 }
 
@@ -178,40 +178,79 @@ defineEmits<{
 }
 
 .nav-menu-label {
-    font-size: 10px;
+    font-size: 0.6875rem;
     font-weight: 500;
     text-align: center;
     line-height: 1;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.025em;
 }
 
 /* Transitions */
 .slide-fade-enter-active {
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.3s ease;
 }
 
 .slide-fade-leave-active {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.2s ease;
 }
 
 .slide-fade-enter-from {
-    transform: translateY(-20px);
+    transform: translateY(-10px);
     opacity: 0;
 }
 
 .slide-fade-leave-to {
-    transform: translateY(-10px);
+    transform: translateY(-5px);
     opacity: 0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .nav-menu {
+        background-color: #1f2937;
+        border-right-color: #374151;
+    }
+
+    .menu-toggle {
+        background-color: #374151;
+        border-bottom-color: #4b5563;
+    }
+
+    .menu-toggle:hover {
+        background-color: #4b5563;
+    }
+
+    .menu-icon {
+        color: #9ca3af;
+    }
+
+    .nav-menu-item {
+        color: #9ca3af;
+    }
+
+    .nav-menu-item:hover {
+        background-color: #374151;
+        color: #f9fafb;
+    }
+
+    .nav-menu-item.active {
+        background-color: #f9fafb;
+        color: #111827;
+    }
+
+    .nav-menu-item.active::before {
+        background-color: #f9fafb;
+    }
 }
 
 /* Responsive adjustments */
 @media (max-height: 600px) {
     .nav-menu-item {
-        height: 56px;
+        height: 52px;
     }
     
     .nav-menu-label {
-        font-size: 9px;
+        font-size: 0.625rem;
     }
 }
 </style>

@@ -1,11 +1,11 @@
 <template>
     <div class="main-section"> 
-        <BindToTask @task-selected="bindTimerToTask"/>
-        <div class="pomodoro-session-cont horizontal-centralize down-flex">
-            <h4 class="strip-boundaries">Pomodoro Session</h4>
-            <Timer
-                ref="timerRef"
-            />
+        <div class="home-container">
+            <BindToTask @task-selected="bindTimerToTask" />
+            
+            <div class="timer-section">
+                <Timer ref="timerRef" />
+            </div>
         </div>
     </div>
 </template>
@@ -15,10 +15,11 @@
     import BindToTask from './BindToTask.vue';
     import type {Task} from '../../composables/useTasks';
     import {ref, nextTick} from 'vue';
+    
     const timerRef = ref<InstanceType<typeof Timer>>();
 
     const bindTimerToTask = async function(task: Task){
-        //wait before the Timer component is mounted 
+        // Wait before the Timer component is mounted 
         await nextTick();
 
         if (timerRef.value && timerRef.value.bindTask){
@@ -27,39 +28,66 @@
             console.warn('Timer component not ready yet');
         }
     }
-
 </script>
 
-<style>
-    .pomodoro-session-cont{
-        background-color: #FFEDFF;
-        width: 451px;
-        height: auto;
-        padding: 10px 0 10px 0;
-        border: 1px solid;
-        box-shadow: 1px 1px 1px green;
-    }
-    .main-section{
+<style scoped>
+    .main-section {
         margin-left: 72px;
-        padding: 15px 0 15px 0;
-        background: #FFF3F3;
-    }
-    .horizontal-centralize{
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .down-flex{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    .strip-boundaries{
-        padding: 0;
-        margin: 0;
+        min-height: 100vh;
+        background-color: #fafafa;
+        transition: margin-left 0.3s ease;
+        padding-top: 2rem; /* Add top padding since we removed header */
     }
 
-    .pomodoro-session-cont > h4{
-        margin: 10px 0 10px 0;
+    .home-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .timer-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .main-section {
+            margin-left: 0;
+            padding-top: 1rem;
+        }
+        
+        .home-container {
+            padding: 1rem;
+            gap: 1.5rem;
+        }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        .main-section {
+            background-color: #111827;
+        }
+    }
+
+    /* Animation for smooth loading */
+    .home-container {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
