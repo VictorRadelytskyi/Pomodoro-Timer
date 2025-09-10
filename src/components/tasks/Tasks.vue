@@ -222,15 +222,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, onMounted} from 'vue';
-    import type {Task} from '../../composables/useTasks'
+    import {ref} from 'vue';
     import {useTasks} from '../../composables/useTasks';
     import Calendar from './Calendar.vue';
 
     const taskName = ref<string>('');
 
     const {
-        tasks, 
         showPopupId,
         completedTasks, 
         uncompletedTasks, 
@@ -248,18 +246,6 @@
         formatWorkTime
     } = useTasks()
 
-
-    onMounted(()=>{
-        const saved = localStorage.getItem('tasks');
-        if(saved){
-            tasks.value = JSON.parse(saved) as Task[];
-        }
-    });
-
-    watch(tasks, (newTasks: Task[])=>{
-        const stringifiedTasks = JSON.stringify(newTasks);
-        localStorage.setItem('tasks', stringifiedTasks);
-    }, {deep: true})
 </script>
 
 <style scoped>
@@ -387,7 +373,6 @@
         transition: all 0.2s ease;
         border: 1px solid transparent;
         position: relative;
-        z-index: 1;
     }
 
     .task-item:hover {
@@ -395,9 +380,9 @@
         border-color: #e5e7eb;
     }
 
-    .task-item.completed {
+    /* .task-item.completed { this causes stacking order mismatch
         opacity: 0.7;
-    }
+    } */
 
     .task-item.completed .task-name {
         text-decoration: line-through;
@@ -505,10 +490,6 @@
     .dropdown-wrapper {
         position: relative;
         z-index: 10;
-    }
-
-    .dropdown-wrapper:has(.dropdown-menu){
-        z-index: 1000;
     }
 
     .dropdown-menu {
@@ -629,7 +610,6 @@
 
         .task-item:hover {
             background-color: #374151;
-            z-index: 10;
         }
 
         .task-name {
