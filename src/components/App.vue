@@ -13,6 +13,50 @@
     const switchView = function(view: string){
         currentView.value = view;
     }
+
+    import { onMounted } from 'vue';
+    import { initializeTimer } from '../composables/useGlobalTimer';
+    import { loadSettings } from '../composables/settings';
+
+    onMounted(() => {
+        console.log('🚀 App mounted, initializing timer...');
+        
+        const settings = loadSettings();
+        const pomodoroTime = settings.pomodoroTime.value;
+        console.log(`pomodoro time before intiailization: ${pomodoroTime}`)
+        
+        
+        initializeTimer(
+            settings.pomodoroTime.value,
+            settings.breakTime.value,
+            {
+                playPomodoroCompletionSound: settings.playPomodoroCompletionSound,
+                playBreakCompletionSound: settings.playBreakCompletionSound,
+            }
+        );
+        
+        console.log('✅ Timer initialization complete');
+    });
+
+    const updateSettings = function(){
+        console.log('🚀 reinitializing timer...');
+        
+        const settings = loadSettings();
+        const pomodoroTime = settings.pomodoroTime.value;
+        console.log(`pomodoro time before intiailization: ${pomodoroTime}`)
+        
+        
+        initializeTimer(
+            settings.pomodoroTime.value,
+            settings.breakTime.value,
+            {
+                playPomodoroCompletionSound: settings.playPomodoroCompletionSound,
+                playBreakCompletionSound: settings.playBreakCompletionSound,
+            }
+        );
+        
+        console.log('✅ Timer reinitialization complete');
+    }
 </script>
 
 <template>
@@ -22,7 +66,7 @@
         <Goals v-if="currentView === 'goals'"/>
         <Tasks v-if="currentView === 'tasks'"/>
         <Statistics v-if="currentView === 'statistics'"/>
-        <Settings v-if="currentView === 'settings'"/>
+        <Settings @settings-updated="updateSettings" v-if="currentView === 'settings'"/>
     <Footer/>
 </template>
 

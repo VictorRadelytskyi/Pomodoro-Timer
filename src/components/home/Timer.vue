@@ -21,14 +21,14 @@
                             />
                         </g>
                         
-                        <!-- Progress circle -->
+                        <!-- ✅ Dynamic progress circle -->
                         <circle 
                             :cx="cx" :cy="cy" :r="r"
                             fill="none" 
-                            stroke="#6b7280" 
+                            :stroke="isBreak ? '#10b981' : '#ef4444'"
                             stroke-width="3"
                             stroke-dasharray="898"
-                            :stroke-dashoffset="898 - (898 * (pomodoroTime - timeLeft) / pomodoroTime)"
+                            :stroke-dashoffset="898 - (898 * progress)"
                             stroke-linecap="round"
                             transform="rotate(-90 147.5 145.5)"
                         />
@@ -40,21 +40,39 @@
                 
                 <!-- Time Display -->
                 <div class="time-display">
+                    <!-- ✅ Show timer type and clean time display -->
+                    <div class="timer-type">{{ timerLabel }}</div>
                     <div class="time-text">
-                        {{minutes}}:{{seconds.toString().padStart(2, "0")}}
+                        {{ minutes }}:{{ seconds.toString().padStart(2, '0') }}
                     </div>
                     <div class="time-label">Time Remaining</div>
+                    
+                    <!-- ✅ Debug info (remove this later) -->
+                    <div class="debug-info" style="font-size: 12px; color: #6b7280; margin-top: 1rem;">
+                        <p>Type: {{ timerType }} | State: {{ TimerState[timerState] }}</p>
+                        <p>Duration: {{ duration }}s | TimeLeft: {{ timeLeft }}s</p>
+                        <p>Progress: {{ (progress * 100).toFixed(1) }}%</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Timer Controls -->
             <div class="timer-controls">
+                <!-- ✅ Separate buttons for different timer types -->
                 <button 
                     v-if="timerState === TimerState.STOPPED" 
                     class="control-btn start"
-                    @click="startTimer"
+                    @click="startPomodoro"
                 >
-                    Start Session
+                    Start Pomodoro
+                </button>
+                
+                <button 
+                    v-if="timerState === TimerState.RUNNING && timerType === 'STUDY_SESSION'" 
+                    class="control-btn start-break"
+                    @click="startBreak"
+                >
+                    Start Break
                 </button>
                 
                 <button 
@@ -78,33 +96,44 @@
                     class="control-btn reset"
                     @click="stopTimer"
                 >
-                    Reset
+                    Finish Session
                 </button>
+
+
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+    import { computed } from 'vue';
     import {useGlobalTimer} from '../../composables/useGlobalTimer';
     import {TimerState} from '../../composables/useGlobalTimer';
-    import {loadSettings} from '../../composables/settings';
-
-    const {pomodoroTime} = loadSettings()
 
     const {
         // State
         timeLeft,
+        duration,
         minutes,
         seconds,
         timerState,
+        timerType,
+        timerLabel,
+        isBreak,
         
-        startTimer,
+        // Actions
+        startPomodoro,
+        startBreak,
         stopTimer,
         pauseTimer,
         resumeTimer,
         bindTask,
     } = useGlobalTimer();
+
+    const progress = computed(() => {
+        if (duration.value === 0) return 0;
+        return (duration.value - timeLeft.value) / duration.value;
+    });
 
     const svgWidth = 295;
     const svgHeight = 291;
@@ -274,6 +303,25 @@
     .control-btn.reset:hover {
         background-color: #fee2e2;
         border-color: #fca5a5;
+    }
+
+    .timer-type {
+        font-size: 1rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .control-btn.start-break {
+        background-color: #10b981;
+        color: #ffffff;
+        border-color: #10b981;
+    }
+
+    .control-btn.start-break:hover {
+        background-color: #059669;
     }
 
     /* Mobile responsive */

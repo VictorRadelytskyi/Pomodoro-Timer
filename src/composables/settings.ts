@@ -1,14 +1,15 @@
-import { ref } from 'vue'
+import { ref } from 'vue';
+import type { Task } from './useTasks';
 
-// Settings state
-const pomodoroTime = ref(25)
-const breakTime = ref(5)
-const soundEffectOnPomodoroCompletion = ref(true)
-const pomodoroCompletionVolume = ref(50)
-const soundEffectOnTaskCompletion = ref(true)
-const taskCompletionVolume = ref(50)
+// ✅ Settings state - declare first
+const pomodoroTime = ref(25);
+const breakTime = ref(5);
+const soundEffectOnPomodoroCompletion = ref(true);
+const pomodoroCompletionVolume = ref(50);
+const soundEffectOnTaskCompletion = ref(true);
+const taskCompletionVolume = ref(50);
 
-// Sound playing functions (integrated here)
+// ✅ Sound functions - define before TimerType uses them
 const playSound = (path: string, volume: number = 0.5) => {
     try {
         const audio = new Audio(path)
@@ -28,6 +29,13 @@ const playPomodoroCompletionSound = () => {
     }
 }
 
+const playBreakCompletionSound = () => {
+    if (soundEffectOnPomodoroCompletion.value) { // ❌ This should use break settings
+        const volume = pomodoroCompletionVolume.value / 100; // ❌ Should use break volume
+        playSound('/sounds/break-complete.mp3', volume); // ✅ Different sound file
+    }
+}
+
 const playTaskCompletionSound = () => {
     if (soundEffectOnTaskCompletion.value) {
         const volume = taskCompletionVolume.value / 100;
@@ -35,7 +43,49 @@ const playTaskCompletionSound = () => {
     }
 }
 
-// Update functions
+// ✅ TimerTypeConfig interface
+interface TimerTypeConfig {
+    duration: () => number; // in minutes
+    canBindTask: boolean;
+    onStart?: () => void;
+    onComplete: () => void;
+    onTick?: (taskWorkingOn: Task | null, updateTimeWorkedOn: Function | null) => void;
+    getLabel: () => string;
+}
+
+// ✅ TimerType object - now all functions are defined
+export const TimerType: Record<string, TimerTypeConfig> = {
+    STUDY_SESSION: {
+        duration: () => pomodoroTime.value,
+        canBindTask: true,
+        onComplete: () => {
+            playPomodoroCompletionSound();
+            console.log('Pomodoro completed! Time for a break.');
+        },
+        onTick: (taskWorkingOn, updateTimeWorkedOn) => {
+            if (taskWorkingOn && updateTimeWorkedOn) {
+                updateTimeWorkedOn(taskWorkingOn, 1);
+            }
+        },
+        getLabel: () => 'Pomodoro'
+    },
+    
+    BREAK: {
+        duration: () => breakTime.value,
+        canBindTask: false,
+        onComplete: () => {
+            playBreakCompletionSound();
+            console.log('Break completed! Ready for another pomodoro?');
+        },
+        getLabel: () => 'Break'
+    }
+} as const;
+
+// ✅ Helper functions
+export const getTimerConfig = (type: keyof typeof TimerType) => TimerType[type];
+export const canTimerBindTask = (type: keyof typeof TimerType) => TimerType[type].canBindTask;
+
+// ✅ Update functions
 const updatePomodoroTime = (value: number) => {
     pomodoroTime.value = value;
     saveToLocalStorage();
@@ -67,7 +117,7 @@ const updateTaskCompletionVolume = (value: number) => {
     saveToLocalStorage();
 }
 
-// LocalStorage functions
+// ✅ LocalStorage functions
 const saveToLocalStorage = () => {
     const settings = {
         pomodoroTime: pomodoroTime.value,
@@ -97,8 +147,10 @@ const loadFromLocalStorage = () => {
     }
 }
 
+
+// ✅ Main export function
 export const loadSettings = () => {
-    loadFromLocalStorage()
+    loadFromLocalStorage();
     
     return {
         // State (reactive refs)
@@ -119,6 +171,7 @@ export const loadSettings = () => {
         
         // Sound functions
         playPomodoroCompletionSound,
+        playBreakCompletionSound,
         playTaskCompletionSound,
         playSound
     }

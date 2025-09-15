@@ -13,13 +13,26 @@
                 <div class="settings-options">
                     <div class="setting-item">
                         <label>Pomodoro Session Duration</label>
+                        <!-- ✅ Direct v-model binding - automatic reactivity! -->
                         <input 
-                        type="number" 
-                        :value="pomodoroTime" 
-                        @input="updatePomodoroTime(Number(($event.target as HTMLInputElement).value))"
-                        min="1" 
-                        max="60">
-                        <span>seconds</span>
+                            type="number" 
+                            v-model.number="pomodoroTime"
+                            min="1" 
+                            max="60"
+                        >
+                        <span>minutes</span>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>Break Session Duration</label>
+                        <!-- ✅ Direct v-model binding - automatic reactivity! -->
+                        <input 
+                            type="number" 
+                            v-model.number="breakTime"
+                            min="1" 
+                            max="60"
+                        >
+                        <span>minutes</span>
                     </div>
                 </div>
             </div>
@@ -38,19 +51,24 @@
                         <h4>Sound Effects on pomodoro completion</h4>
                         <div class="setting-item">
                             <label>Enable Sound</label>
+                            <!-- ✅ Direct v-model binding -->
                             <input 
-                            type="checkbox" 
-                            :checked="soundEffectOnPomodoroCompletion"
-                            @change="updateSoundEffectOnPomodoroCompletion(($event.target as HTMLInputElement).checked)">
+                                type="checkbox" 
+                                v-model="soundEffectOnPomodoroCompletion"
+                            >
                         </div>
                         <div class="setting-item">
                             <label>Volume</label>
-                            <input type="range" 
-                            :value="pomodoroCompletionVolume" 
-                            @input="updatePomodoroCompletionVolume(Number(($event.target as HTMLInputElement).value))"
-                            min="0" 
-                            max="100">
+                            <!-- ✅ Direct v-model binding -->
+                            <input 
+                                type="range" 
+                                v-model.number="pomodoroCompletionVolume"
+                                min="0" 
+                                max="100"
+                            >
                             <span>{{ pomodoroCompletionVolume }}%</span>
+                            <!-- ✅ Test button -->
+                            <button @click="playPomodoroCompletionSound()">Test</button>
                         </div>
                     </div>
                     
@@ -58,21 +76,24 @@
                         <h4>Sound Effects on task completion</h4>
                         <div class="setting-item">
                             <label>Enable Sound</label>
+                            <!-- ✅ Direct v-model binding -->
                             <input 
-                            type="checkbox" 
-                            :checked="soundEffectOnTaskCompletion"
-                            @change="updateSoundEffectOnTaskCompletion(($event.target as HTMLInputElement).checked)"
+                                type="checkbox" 
+                                v-model="soundEffectOnTaskCompletion"
                             >
                         </div>
                         <div class="setting-item">
                             <label>Volume</label>
+                            <!-- ✅ Direct v-model binding -->
                             <input 
-                            type="range" 
-                            :value="taskCompletionVolume" 
-                            @input="updateTaskCompletionVolume(Number(($event.target as HTMLInputElement).value))"
-                            min="0" 
-                            max="100">
+                                type="range" 
+                                v-model.number="taskCompletionVolume"
+                                min="0" 
+                                max="100"
+                            >
                             <span>{{ taskCompletionVolume }}%</span>
+                            <!-- ✅ Test button -->
+                            <button @click="playTaskCompletionSound()">Test</button>
                         </div>
                     </div>
                 </div>
@@ -82,20 +103,21 @@
 </template>
 
 <script setup lang="ts">
-import { loadSettings } from '../../composables/settings';
+import { useSettingsStore } from '../../stores/useSettingsStore';
+
+// ✅ No more emit needed - store handles everything automatically
 const {
     pomodoroTime,
-    updatePomodoroTime,
+    breakTime,
     soundEffectOnPomodoroCompletion,
-    updateSoundEffectOnPomodoroCompletion,
     pomodoroCompletionVolume,
-    updatePomodoroCompletionVolume,
     soundEffectOnTaskCompletion,
-    updateSoundEffectOnTaskCompletion,
     taskCompletionVolume,
-    updateTaskCompletionVolume
-} = loadSettings()
+    playPomodoroCompletionSound,
+    playTaskCompletionSound
+} = useSettingsStore();
 
+// ✅ No wrapper functions needed - direct binding to reactive refs!
 </script>
 
 <style scoped>

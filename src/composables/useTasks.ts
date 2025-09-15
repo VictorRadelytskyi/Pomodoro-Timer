@@ -96,7 +96,15 @@ export function useTasks(){
     }
 
     const updateTimeWorkedOn = function(task: Task, deltaSeconds: number){
-        task.timeWorkedOn += deltaSeconds;
+        const taskIndex = tasks.value.findIndex(t=>t.id===task.id);
+        if (taskIndex != -1){
+            tasks.value[taskIndex] = {
+                ...tasks.value[taskIndex],
+                timeWorkedOn: tasks.value[taskIndex].timeWorkedOn + deltaSeconds
+            }
+        } else{
+            throw Error(`No task ${JSON.stringify(task.id, null, 2)} found`);
+        }
     };
 
     const showCalendarPopup = function(taskId: string){
