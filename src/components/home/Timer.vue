@@ -46,12 +46,54 @@
                         {{ minutes }}:{{ seconds.toString().padStart(2, '0') }}
                     </div>
                     <div class="time-label">Time Remaining</div>
+                </div>
+            </div>
+
+            <!-- ✅ New Info Panel -->
+            <div class="timer-info-panel">
+                <div class="info-row">
+                    <div class="info-item state-info">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" :class="`state-${getStateDisplayName(timerState).toLowerCase()}`">
+                            {{ getStateDisplayName(timerState) }}
+                        </span>
+                    </div>
                     
-                    <!-- ✅ Debug info (remove this later) -->
-                    <div class="debug-info" style="font-size: 12px; color: #6b7280; margin-top: 1rem;">
-                        <p>Type: {{ timerType }} | State: {{ TimerState[timerState] }}</p>
-                        <p>Duration: {{ duration }}s | TimeLeft: {{ timeLeft }}s</p>
-                        <p>Progress: {{ (progress * 100).toFixed(1) }}%</p>
+                    <div class="info-item progress-info">
+                        <span class="info-label">Progress:</span>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div 
+                                    class="progress-fill" 
+                                    :style="{ width: `${(progress * 100)}%` }"
+                                    :class="{ 'break-progress': isBreak }"
+                                ></div>
+                            </div>
+                            <span class="progress-text">{{ (progress * 100).toFixed(1) }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ Task info - only show if applicable -->
+                <div v-if="canBindTask && taskWorkingOn" class="info-row task-row">
+                    <div class="info-item task-info">
+                        <span class="info-label">Working on:</span>
+                        <span class="task-name">{{ taskWorkingOn.name }}</span>
+                        <button 
+                            class="unbind-btn"
+                            @click="unbindTask"
+                            title="Stop working on this task"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- ✅ Show when no task is bound but can bind -->
+                <div v-else-if="canBindTask && !taskWorkingOn" class="info-row task-row">
+                    <div class="info-item no-task-info">
+                        <span class="info-label">Task:</span>
+                        <span class="no-task-text">None selected</span>
                     </div>
                 </div>
             </div>
@@ -98,8 +140,6 @@
                 >
                     Finish Session
                 </button>
-
-
             </div>
         </div>
     </div>
@@ -114,12 +154,14 @@
         // State
         timeLeft,
         duration,
+        taskWorkingOn,
         minutes,
         seconds,
         timerState,
         timerType,
         timerLabel,
         isBreak,
+        canBindTask,
         
         // Actions
         startPomodoro,
@@ -128,12 +170,27 @@
         pauseTimer,
         resumeTimer,
         bindTask,
+        unbindTask,
     } = useGlobalTimer();
 
     const progress = computed(() => {
         if (duration.value === 0) return 0;
         return (duration.value - timeLeft.value) / duration.value;
     });
+
+    // ✅ Helper function to display state names
+    const getStateDisplayName = (state: TimerState): string => {
+        switch (state) {
+            case TimerState.RUNNING:
+                return 'Running';
+            case TimerState.PAUSED:
+                return 'Paused';
+            case TimerState.STOPPED:
+                return 'Stopped';
+            default:
+                return 'Unknown';
+        }
+    };
 
     const svgWidth = 295;
     const svgHeight = 291;
@@ -203,7 +260,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 2.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .timer-svg {
@@ -226,6 +283,155 @@
         font-family: system-ui, -apple-system, sans-serif;
         letter-spacing: 0.1em;
         font-weight: 500;
+    }
+
+    .timer-type {
+        font-size: 1rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ✅ Info Panel Styles */
+    .timer-info-panel {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        font-size: 0.875rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .info-label {
+        font-weight: 500;
+        color: #6b7280;
+        white-space: nowrap;
+    }
+
+    .info-value {
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .info-value.state-running {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .info-value.state-paused {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .info-value.state-stopped {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 6px;
+        background-color: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background-color: #ef4444;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-fill.break-progress {
+        background-color: #10b981;
+    }
+
+    .progress-text {
+        font-weight: 500;
+        color: #6b7280;
+        min-width: 45px;
+        text-align: right;
+    }
+
+    .task-row {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        margin-bottom: 0;
+    }
+
+    .task-info {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .task-name {
+        font-weight: 500;
+        color: #111827;
+        flex: 1;
+        text-align: left;
+        margin-left: 0.5rem;
+    }
+
+    .unbind-btn {
+        background-color: #fee2e2;
+        color: #dc2626;
+        border: none;
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .unbind-btn:hover {
+        background-color: #fecaca;
+    }
+
+    .no-task-info {
+        width: 100%;
+    }
+
+    .no-task-text {
+        color: #9ca3af;
+        font-style: italic;
+        flex: 1;
+        text-align: left;
+        margin-left: 0.5rem;
     }
 
     .timer-controls {
@@ -305,15 +511,6 @@
         border-color: #fca5a5;
     }
 
-    .timer-type {
-        font-size: 1rem;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
     .control-btn.start-break {
         background-color: #10b981;
         color: #ffffff;
@@ -344,6 +541,20 @@
             padding: 0.625rem 1.25rem;
             font-size: 0.8125rem;
         }
+
+        .info-row {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-item {
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .progress-container {
+            gap: 0.5rem;
+        }
     }
 
     /* Dark mode support */
@@ -355,6 +566,11 @@
         .timer-card {
             background-color: #1f2937;
             border-color: #374151;
+        }
+
+        .timer-info-panel {
+            background-color: #374151;
+            border-color: #4b5563;
         }
 
         .time-text {
@@ -373,6 +589,10 @@
 
         .control-btn:hover {
             background-color: #4b5563;
+        }
+
+        .task-name {
+            color: #f9fafb;
         }
     }
 </style>
