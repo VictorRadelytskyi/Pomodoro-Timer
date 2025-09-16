@@ -244,9 +244,14 @@ defineEmits<{
 }
 
 /* Responsive adjustments */
-@media (max-height: 600px) {
+@media (max-width: 768px) {
     .nav-menu-item {
-        height: 52px;
+        height: 50px;
+        width: 50px;    
+    }
+
+    .nav-menu{
+        width: 64px;
     }
     
     .nav-menu-label {

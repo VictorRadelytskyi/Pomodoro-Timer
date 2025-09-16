@@ -32,7 +32,6 @@
 
 <style scoped>
     .main-section {
-        margin-left: 72px;
         min-height: 100vh;
         background-color: #fafafa;
         transition: margin-left 0.3s ease;

@@ -250,7 +250,6 @@
 
 <style scoped>
     .main-section {
-        margin-left: 72px;
         min-height: 100vh;
         background-color: #fafafa;
         transition: margin-left 0.3s ease;
@@ -552,13 +551,6 @@
     }
 
     @media (max-width: 768px) {
-        .main-section {
-            margin-left: 0;
-        }
-        
-        .tasks-container {
-            padding: 1rem;
-        }
         
         .tasks-content {
             grid-template-columns: 1fr;

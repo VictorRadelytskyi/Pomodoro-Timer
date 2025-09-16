@@ -98,7 +98,7 @@
                     </div>
                     
                     <div class="sound-type">
-                        <h4>Sound Effects on task completion</h4>
+                        <h4>Sound effect on task completion</h4>
                         <div class="setting-item">
                             <label>Enable Sound</label>
                             <!-- ✅ Direct v-model binding -->

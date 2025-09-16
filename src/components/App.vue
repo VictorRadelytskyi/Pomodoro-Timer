@@ -62,11 +62,25 @@
 <template>
     <Menu :current-view="currentView" @change-view="switchView"/>
     <Header/>
-        <Home v-if="currentView === 'home'" class="main-section"/>
-        <Goals v-if="currentView === 'goals'"/>
-        <Tasks v-if="currentView === 'tasks'"/>
-        <Statistics v-if="currentView === 'statistics'"/>
-        <Settings @settings-updated="updateSettings" v-if="currentView === 'settings'"/>
+        <div class="app">
+            <Home v-if="currentView === 'home'" />
+            <Goals v-if="currentView === 'goals'"/>
+            <Tasks v-if="currentView === 'tasks'"/>
+            <Statistics v-if="currentView === 'statistics'"/>
+            <Settings @settings-updated="updateSettings" v-if="currentView === 'settings'"/>
+        </div>
     <Footer/>
 </template>
+
+<style scoped>
+    .app{
+        margin-left: 72px;
+        background-color: #fafafa;
+    }
+    @media (max-width: 768px){
+        .app{
+            margin-left: 64px;
+        }
+    }
+</style>
 
