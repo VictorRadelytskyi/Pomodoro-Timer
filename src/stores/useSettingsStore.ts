@@ -73,21 +73,21 @@ const playSound = (path: string, volume: number = 0.5) => {
 const playPomodoroCompletionSound = () => {
     if (soundEffectOnPomodoroCompletion.value) {
         const volume = pomodoroCompletionVolume.value / 100;
-        playSound('/sounds/pomodoro_completed.mp3', volume);
+        playSound('/sounds/pomodoro-completed.mp3', volume);
     }
 };
 
 const playTaskCompletionSound = () => {
-    if (soundEffectOnBreakCompletion.value) {
-        const volume = breakCompletionVolume.value / 100;
-        playSound('/sounds/task-complete.mp3', volume);
+    if (soundEffectOnTaskCompletion.value) {
+        const volume = taskCompletionVolume.value / 100;
+        playSound('/sounds/task-completed.mp3', volume);
     }
 };
 
 const playBreakCompletionSound = () => {
     if (soundEffectOnBreakCompletion.value) {
         const volume = breakCompletionVolume.value / 100;
-        playSound('/sounds/break-complete.mp3', volume);
+        playSound('/sounds/break-completed.mp3', volume);
     }
 };
 
@@ -124,6 +124,8 @@ export const useSettingsStore = () => {
         pomodoroCompletionVolume,
         soundEffectOnTaskCompletion,
         taskCompletionVolume,
+        soundEffectOnBreakCompletion,
+        breakCompletionVolume,
         
         // Sound functions
         playPomodoroCompletionSound,

@@ -48,7 +48,7 @@
                 
                 <div class="settings-options">
                     <div class="sound-type">
-                        <h4>Sound Effects on pomodoro completion</h4>
+                        <h4>Sound effect on pomodoro completion</h4>
                         <div class="setting-item">
                             <label>Enable Sound</label>
                             <!-- ✅ Direct v-model binding -->
@@ -69,6 +69,31 @@
                             <span>{{ pomodoroCompletionVolume }}%</span>
                             <!-- ✅ Test button -->
                             <button @click="playPomodoroCompletionSound()">Test</button>
+                        </div>
+                    </div>
+
+                    <div class="sound-type">
+                        <h4>Sound effect on break completion</h4>
+                        <div class="setting-item">
+                            <label>Enable Sound</label>
+                            <!-- ✅ Direct v-model binding -->
+                            <input 
+                                type="checkbox" 
+                                v-model="soundEffectOnBreakCompletion"
+                            >
+                        </div>
+                        <div class="setting-item">
+                            <label>Volume</label>
+                            <!-- ✅ Direct v-model binding -->
+                            <input 
+                                type="range" 
+                                v-model.number="breakCompletionVolume"
+                                min="0" 
+                                max="100"
+                            >
+                            <span>{{ breakCompletionVolume }}%</span>
+                            <!-- ✅ Test button -->
+                            <button @click="playBreakCompletionSound()">Test</button>
                         </div>
                     </div>
                     
@@ -105,19 +130,20 @@
 <script setup lang="ts">
 import { useSettingsStore } from '../../stores/useSettingsStore';
 
-// ✅ No more emit needed - store handles everything automatically
 const {
     pomodoroTime,
     breakTime,
     soundEffectOnPomodoroCompletion,
+    soundEffectOnBreakCompletion,
     pomodoroCompletionVolume,
     soundEffectOnTaskCompletion,
     taskCompletionVolume,
     playPomodoroCompletionSound,
-    playTaskCompletionSound
+    playTaskCompletionSound,
+    breakCompletionVolume,
+    playBreakCompletionSound
 } = useSettingsStore();
 
-// ✅ No wrapper functions needed - direct binding to reactive refs!
 </script>
 
 <style scoped>
