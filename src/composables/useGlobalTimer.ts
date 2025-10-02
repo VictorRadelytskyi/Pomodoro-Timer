@@ -8,7 +8,7 @@ export enum TimerState {
     STOPPED,
 }
 
-// ✅ Make timer types more explicit
+
 export interface TimerConfig {
     duration: number; // Store actual duration, not function
     canBindTask: boolean;
@@ -26,7 +26,6 @@ interface TimerContext {
     timeLeft: number; // in seconds
 }
 
-// ✅ Simple, predictable state
 let currentTimerContext = ref<TimerContext>({
     type: 'STUDY_SESSION',
     state: TimerState.STOPPED,
@@ -64,7 +63,6 @@ export const initializeTimer = (pomodoroMinutes: number, breakMinutes: number, s
         }
     };
     
-    // ✅ Initialize with explicit values
     currentTimerContext.value = {
         type: 'STUDY_SESSION',
         state: TimerState.STOPPED,
@@ -87,7 +85,6 @@ const getTimerConfig = (type: TimerTypeName) => {
     return timerConfigs.value[type];
 };
 
-// ✅ Simple, predictable timer creation
 const createTimerContext = (type: TimerTypeName, timerState: TimerState = TimerState.STOPPED): TimerContext => {
     const config = getTimerConfig(type);
     
@@ -111,10 +108,10 @@ const clearGlobalInterval = () => {
         console.log('🛑 Clearing existing interval:', globalIntervalId);
         clearInterval(globalIntervalId);
         globalIntervalId = null;
+        broadcastTimerState();
     }
 };
 
-// ✅ Rest of your functions stay mostly the same, but simpler
 const startTimer = (type: TimerTypeName = 'STUDY_SESSION') => {
     clearGlobalInterval();
 
@@ -135,10 +132,13 @@ const startTimer = (type: TimerTypeName = 'STUDY_SESSION') => {
     
     currentTimerContext.value.state = TimerState.RUNNING;
     
+    broadcastTimerState();
+    
     globalIntervalId = setInterval(() => {
         if (currentTimerContext.value.timeLeft > 0) {
             currentTimerContext.value.timeLeft -= 1;
             config.onTick?.(taskWorkingOn.value, globalUpdateTimeWorkedOn);
+            broadcastTimerState();
         } else {
             handleTimerCompletion();
         }
@@ -154,10 +154,103 @@ const handleTimerCompletion = () => {
     // Auto-transition
     const nextType = currentTimerContext.value.type === 'STUDY_SESSION' ? 'BREAK' : 'STUDY_SESSION';
     currentTimerContext.value = createTimerContext(nextType, TimerState.RUNNING);
+    broadcastTimerState();
     
 };
 
-// ✅ Export the composable
+const broadcastTimerState = () => {
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        try {
+            const timerData = {
+                timeLeft: currentTimerContext.value.timeLeft,
+                duration: currentTimerContext.value.duration,
+                state: TimerState[currentTimerContext.value.state],
+                type: currentTimerContext.value.type,
+                taskName: taskWorkingOn.value?.name || null
+            };
+
+            chrome.runtime.sendMessage({
+                type: 'TIMER_STATE_UPDATE',
+                data: timerData
+            }).catch(() => {
+                console.log('Extension not available');
+            });
+        } catch (error) {
+            console.log('Chrome runtime error:', error);
+        }
+    }
+}
+
+export const setupExtensionSync = () => {
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+            console.log('SPA received message:', message);
+            
+            switch (message.type) {
+                case 'REQUEST_TIMER_STATE':
+                    // Send current state to popup
+                    const currentState = {
+                        timeLeft: currentTimerContext.value.timeLeft,
+                        duration: currentTimerContext.value.duration,
+                        state: TimerState[currentTimerContext.value.state],
+                        type: currentTimerContext.value.type,
+                        taskName: taskWorkingOn.value?.name || null
+                    };
+                    
+                    sendResponse({ success: true, data: currentState });
+                    break;
+                    
+                case 'START_TIMER_FROM_POPUP':
+                    startTimer(message.data?.type || 'STUDY_SESSION');
+                    sendResponse({ success: true });
+                    break;
+                    
+                case 'PAUSE_TIMER_FROM_POPUP':
+                    const timer = useGlobalTimer();
+                    timer.pauseTimer();
+                    sendResponse({ success: true });
+                    break;
+                    
+                case 'STOP_TIMER_FROM_POPUP':
+                    const timerInstance = useGlobalTimer();
+                    timerInstance.stopTimer();
+                    sendResponse({ success: true });
+                    break;
+            }
+            
+            return true; // Keep message channel open
+        });
+    }
+};
+
+export const listenForExtensionUpdates = () => {
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.onMessage.addListener((message) => {
+            if (message.type === 'SYNC_FROM_POPUP') {
+                // Update SPA when popup changes timer
+                syncTimerFromExtension(message.data);
+            }
+        });
+    }
+};
+
+const syncTimerFromExtension = (extensionData: any) => {
+    if (extensionData.state === 'RUNNING' && currentTimerContext.value.state !== TimerState.RUNNING) {
+        startTimer(extensionData.type);
+    } else if (extensionData.state === 'PAUSED' && currentTimerContext.value.state !== TimerState.PAUSED) {
+        const timer = useGlobalTimer();
+        timer.pauseTimer();
+    } else if (extensionData.state === 'STOPPED' && currentTimerContext.value.state !== TimerState.STOPPED) {
+        const timer = useGlobalTimer();
+        timer.stopTimer();
+    }
+    
+    // Sync time if different
+    if (extensionData.timeLeft !== currentTimerContext.value.timeLeft) {
+        currentTimerContext.value.timeLeft = extensionData.timeLeft;
+    }
+};
+
 export const useGlobalTimer = () => {
     if (!globalUpdateTimeWorkedOn) {
         globalUpdateTimeWorkedOn = useTasks().updateTimeWorkedOn;
@@ -176,9 +269,8 @@ export const useGlobalTimer = () => {
     const seconds = computed(() => Math.round(timeLeft.value % 60));
     
     const isStudySession = computed(() => timerType.value === 'STUDY_SESSION');
-    const isBreak = computed(() => timerType.value === 'BREAK'); // ✅ Add this
+    const isBreak = computed(() => timerType.value === 'BREAK'); 
     
-    // ✅ Task binding functions
     const bindTask = (task: Task) => {
         const config = getTimerConfig(currentTimerContext.value.type);
         
@@ -204,7 +296,6 @@ export const useGlobalTimer = () => {
         }
     };
 
-    // ✅ Timer controls
     const pauseTimer = () => {
         const config = getTimerConfig(currentTimerContext.value.type);
         if (!config) {
@@ -220,6 +311,7 @@ export const useGlobalTimer = () => {
         }
         
         currentTimerContext.value.state = TimerState.PAUSED;
+        broadcastTimerState();
     };
 
     const resumeTimer = () => {
@@ -242,29 +334,30 @@ export const useGlobalTimer = () => {
         currentTimerContext.value.state = TimerState.STOPPED;
         currentTimerContext.value.timeLeft = currentTimerContext.value.duration;
         
-        // ✅ Only unbind task if timer supports task binding
         if (config?.canBindTask) {
             taskWorkingOn.value = null;
         }
+
+        broadcastTimerState();
     };
 
     return {
         // State
         timeLeft: readonly(timeLeft),
-        duration: readonly(duration),                    // ✅ Add this
-        taskWorkingOn: readonly(taskWorkingOn),          // ✅ Add this
+        duration: readonly(duration),                    
+        taskWorkingOn: readonly(taskWorkingOn),          
         timerState: readonly(timerState),
         timerType: readonly(timerType),
-        canBindTask: readonly(canBindTask),              // ✅ Add this
+        canBindTask: readonly(canBindTask),              
         timerLabel: readonly(timerLabel),
         
-        // ✅ Computed
+        // Computed
         minutes,
         seconds,
         isStudySession,
         isBreak,                                         
         
-        // ✅ Actions
+        // Actions
         startTimer,
         startPomodoro: () => startTimer('STUDY_SESSION'),
         startBreak: () => startTimer('BREAK'),
@@ -274,10 +367,7 @@ export const useGlobalTimer = () => {
         bindTask,                                        
         unbindTask,                                      
         
-        // ✅ Enums
+        // Enums
         TimerState
     };
 };
-
-// ✅ Make sure to call this after settings load
-// timerConfigs = null; // Will be set by initializeTimer
