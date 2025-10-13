@@ -182,12 +182,15 @@ const broadcastTimerState = () => {
 }
 
 export const setupExtensionSync = () => {
+    console.log("Hello from setup extension");
     if (typeof chrome !== 'undefined' && chrome.runtime) {
+        console.log("chorome runtime exists");
         chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             console.log('SPA received message:', message);
             
             switch (message.type) {
                 case 'REQUEST_TIMER_STATE':
+                    console.log("Received request on timer state");
                     // Send current state to popup
                     const currentState = {
                         timeLeft: currentTimerContext.value.timeLeft,

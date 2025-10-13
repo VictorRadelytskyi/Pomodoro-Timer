@@ -2,26 +2,31 @@
   "manifest_version": 3,
   "name": "Pomodoro Timer",
   "version": "1.0.0",
-  "description": "A productivity timer using the Pomodoro Technique",
-  
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
+  "description": "A modern, feature-rich Pomodoro Timer application built with Vue.js and TypeScript, designed to boost productivity through the proven Pomodoro Technique",
   
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "Pomodoro Timer"
+    "default_popup": "popup.html"
   },
   
-  "web_accessible_resources": [
-    {
-      "resources": ["index.html", "assets/*"],
-      "matches": ["<all_urls>"]
-    }
+  "permissions": [
+    "tabs",
+    "storage"
   ],
-  
+
+  "web_accessible_resources": [{
+    "resources": [
+      "index.html",
+      "assets/*",
+      "public/",
+      "*.js",
+      "*.css",
+      "*.png",
+      "*.svg"
+    ],
+    "matches": ["<all_urls>"]
+  }],
+
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   }
 }
